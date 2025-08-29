@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anime Elo Leaderboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Anime Elo Leaderboard</h1>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard">
+      <h2>Most Recent Users</h2>
+      <ul id="leaderboardList">
+        <li>Loading leaderboard...</li>
+      </ul>
+    </div>
+
+    <!-- Login/Register button -->
+    <button id="loginBtn">Add Your List</button>
+
+    <!-- Login/Register Modal -->
+    <div id="authModal" class="modal hidden">
+      <div class="modal-content">
+        <span id="closeModal" class="close">&times;</span>
+
+        <h2 id="authTitle">Login</h2>
+
+        <input type="text" id="usernameInput" placeholder="Username" required>
+        <input type="password" id="passwordInput" placeholder="Password" required>
+        <button id="authSubmitBtn">Login</button>
+
+        <p id="toggleAuthText">Don't have an account? <button id="toggleAuthBtn">Register</button></p>
+        <div id="message"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

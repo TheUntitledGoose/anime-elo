@@ -1,0 +1,27 @@
+<div id="profile">
+  <h2>Your Anime List</h2>
+  <table>
+    <thead>
+      <tr><th>Anime</th><th>Elo</th></tr>
+    </thead>
+    <tbody id="anime-table"></tbody>
+  </table>
+</div>
+
+<script>
+async function loadProfile() {
+  const res = await fetch('/profile');
+  const data = await res.json();
+
+  const tbody = document.getElementById('anime-table');
+  tbody.innerHTML = '';
+
+  data.animeList.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${a.name}</td><td>${Math.round(a.elo)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+loadProfile();
+</script>

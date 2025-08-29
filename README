@@ -1,0 +1,10 @@
+Backend API for an anime ELO site.
+
+
+Authentication: cookie-session + bcrypt hashed passwords.
+
+
+Anonymous flow: client stores anonUuid in localStorage and sends it in x-anon-uuid header. After login, call /auth/claim-anon to merge.
+
+
+Voting: client fetches /vote/bootstrap to get the user's rating pool and a signed HMAC (sig, nonce, expiresAt, ids). Client chooses local pair, then posts /vote/submit including that signature. Server validates signature and that submitted pair is inside the signed ids set, then recalculates Elo server-side and writes voteLogs.

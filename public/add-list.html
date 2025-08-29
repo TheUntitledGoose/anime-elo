@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Your Anime List</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Add Your Anime List</h1>
+    <textarea id="animeListInput" placeholder="Enter anime names separated by commas or newlines" rows="10"></textarea>
+    <button id="submitAnimeList">Submit List</button>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const submitBtn = document.getElementById('submitAnimeList');
+    const animeInput = document.getElementById('animeListInput');
+    const messageDiv = document.getElementById('message');
+
+    const showMessage = (msg, success=true) => {
+      messageDiv.textContent = msg;
+      messageDiv.style.color = success ? 'green' : 'red';
+    }
+
+    submitBtn.addEventListener('click', async () => {
+      const raw = animeInput.value.trim();
+      if (!raw) return showMessage('Please enter some anime', false);
+
+      const list = raw.split(/\n|,/).map(s => s.trim()).filter(Boolean);
+
+      const res = await fetch('/anime/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ anime: list })
+      });
+      const data = await res.json();
+      if (res.ok) showMessage('Anime list submitted!');
+      else showMessage(data.error, false);
+    });
+  </script>
+</body>
+</html>
