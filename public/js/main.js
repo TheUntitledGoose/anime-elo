@@ -120,7 +120,9 @@ function createUserAnimeList(userData) {
 
   // Handle case where animeList might be undefined
   if (userData.animeList && Array.isArray(userData.animeList)) {
-    userData.animeList.forEach(anime => {
+    // Only display top 5 animes
+    const top5Animes = userData.animeList.slice(0, 5);
+    top5Animes.forEach(anime => {
       const animeCard = document.createElement('div');
       animeCard.classList.add('anime-card');
 

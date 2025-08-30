@@ -21,8 +21,8 @@ router.get('/latest', async (req, res) => {
       const user = await User.findOne({ _id: list.userUuid }).lean();
       const username = user?.username || 'Unknown User';
       
-      // Sort anime by ELO descending
-      const sortedAnime = [...list.animeList].sort((a, b) => b.elo - a.elo);
+      // Sort anime by ELO descending and take top 5
+      const sortedAnime = [...list.animeList].sort((a, b) => b.elo - a.elo).slice(0, 5);
       
       return {
         user: username,
