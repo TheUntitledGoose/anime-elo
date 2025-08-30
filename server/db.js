@@ -18,7 +18,7 @@ export async function initDb() {
 
   // create indexes (idempotent)
   await db.collection('users').createIndex({ usernameLower: 1 }, { unique: true, sparse: true });
-  await db.collection('users').createIndex({ uuid: 1 }, { unique: true });
+  // await db.collection('users').createIndex({ uuid: 1 }, { unique: true });
 
   await db.collection('animes').createIndex({ slug: 1 }, { unique: true });
 
