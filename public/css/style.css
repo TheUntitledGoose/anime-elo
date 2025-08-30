@@ -267,3 +267,17 @@ textarea {
   background: linear-gradient(#ffed29, #e4a500);
   font-weight: 700;
 }
+
+.user-anime-list {
+  margin: 1rem auto;
+  text-align: center;
+}
+
+.user-anime-list table.anime-table {
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+.user-anime-list table.anime-table td {
+  padding: 0.5rem 1rem;
+}

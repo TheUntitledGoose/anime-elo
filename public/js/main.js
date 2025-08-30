@@ -111,15 +111,27 @@ function createUserAnimeList(userData) {
   span.textContent = `(Last Updated: ${new Date(userData.updatedAt).toLocaleString()})`;
   container.appendChild(span)
 
-  // Anime List
-  const list = document.createElement('ul');
-  userData.animeList.forEach(anime => {
-    const item = document.createElement('p');
-    item.textContent = `${anime.name} — Elo: ${anime.elo}`;
-    list.appendChild(item);
-  });
-  container.appendChild(list);
+  // Anime Table
+  const table = document.createElement('table');
+  table.classList.add('anime-table');
 
+  userData.animeList.forEach(anime => {
+    const row = document.createElement('tr');
+
+    const nameCell = document.createElement('td');
+    nameCell.textContent = anime.name;
+    nameCell.style.textAlign = 'right'; // right-align anime name
+    row.appendChild(nameCell);
+
+    const eloCell = document.createElement('td');
+    eloCell.textContent = anime.elo;
+    eloCell.style.textAlign = 'left'; // left-align Elo
+    row.appendChild(eloCell);
+
+    table.appendChild(row);
+  });
+
+  container.appendChild(table);
   return container;
 }
 
