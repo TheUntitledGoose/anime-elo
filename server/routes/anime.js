@@ -28,9 +28,25 @@ router.post('/submit', async (req, res) => {
     const now = new Date();
     const newAnimeEntries = [];
 
+    // First, get the user's current anime list to check for duplicates
+    const currentUserList = await UserList.findOne({ userUuid });
+    const existingAnimeNames = new Set();
+    
+    if (currentUserList && currentUserList.animeList) {
+      currentUserList.animeList.forEach(anime => {
+        existingAnimeNames.add(anime.name.toLowerCase());
+      });
+    }
+
     for (let name of animeListInput) {
       name = name.trim();
       if (!name) continue;
+
+      // Skip if already exists in user's list
+      const lowerName = name.toLowerCase();
+      if (existingAnimeNames.has(lowerName)) {
+        continue;
+      }
 
       const slug = slugify(name);
 
@@ -41,6 +57,11 @@ router.post('/submit', async (req, res) => {
       }
 
       newAnimeEntries.push({ name, elo: 1500 });
+      existingAnimeNames.add(lowerName); // Add to set for subsequent checks in this request
+    }
+
+    if (newAnimeEntries.length === 0) {
+      return res.json({ ok: true, added: 0, message: 'No new anime to add - all were duplicates' });
     }
 
     // Use $addToSet with $each to append multiple entries, automatically avoiding duplicates
