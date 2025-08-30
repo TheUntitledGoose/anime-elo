@@ -60,4 +60,22 @@ router.post('/submit', async (req, res) => {
   }
 });
 
+// GET /anime/search?query=anime_name
+router.get('/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ error: 'Query parameter required' });
+    
+    // Search for anime by name (case insensitive)
+    const animes = await Anime.find({
+      name: { $regex: new RegExp(query, 'i') }
+    }).limit(10);
+    
+    res.json(animes);
+  } catch (err) {
+    console.error('anime search err', err);
+    res.status(500).json({ error: 'internal' });
+  }
+});
+
 export default router;

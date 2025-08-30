@@ -10,6 +10,7 @@
 <body>
   <!-- Dynamic Nav -->
   <div id="navContainer">
+    <button id="homeBtn" class="btn-hover color-8">Home</button>
     <button id="loginBtn" class="btn-hover color-8">Login</button>
     <button id="profileBtn" class="hidden">Profile</button>
     <button id="logoutBtn" class="hidden">Logout</button>
@@ -35,9 +36,29 @@
 
   <div class="container">
     <h1>Add Your Anime List</h1>
-    <textarea id="animeListInput" placeholder="Enter anime names separated by commas or newlines" rows="10"></textarea>
-    <button id="submitAnimeList" style="width: 100px;">Submit List</button>
-    <div id="message"></div>
+    <p>Enter your anime list below. You can paste from spreadsheets or enter one anime per line.</p>
+    
+    <!-- Search Section -->
+    <div style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center;">
+      <div style="width: 100%; max-width: 600px; display: flex; gap: 10px;">
+        <input type="text" id="animeSearchInput" placeholder="Search for existing anime..." style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #4a4a6a; background: rgba(20, 20, 35, 0.7); color: white;">
+        <button id="searchBtn" style="padding: 12px 24px; border-radius: 8px; background: linear-gradient(45deg, #9a4fc7, #6a309f); color: white; border: none; font-weight: bold; cursor: pointer;">Search</button>
+      </div>
+    </div>
+
+    <!-- Search Results Section -->
+    <div id="searchResults" style="margin-top: 15px; margin-bottom: 15px; display: none; background: rgba(40, 40, 60, 0.6); padding: 15px; border-radius: 10px;"></div>
+
+    <!-- Textarea Section -->
+    <textarea id="animeListInput" placeholder="Enter anime names separated by commas or newlines" rows="10" style="width: 100%; max-width: 600px; margin: 0 auto; padding: 12px; border-radius: 8px; border: 1px solid #4a4a6a; background: rgba(20, 20, 35, 0.7); color: white;"></textarea>
+
+    <!-- Action Buttons -->
+    <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+      <button id="submitAnimeList" style="padding: 12px 24px; border-radius: 8px; background: linear-gradient(45deg, #43cea2, #185a9d); color: white; border: none; font-weight: bold; cursor: pointer;">Submit List</button>
+      <button id="clearBtn" style="padding: 12px 24px; border-radius: 8px; background: linear-gradient(45deg, #e74c3c, #c0392b); color: white; border: none; font-weight: bold; cursor: pointer;">Clear</button>
+    </div>
+
+    <div id="message" style="margin-top: 15px; text-align: center;"></div>
   </div>
 
   <script src="js/main.js"></script>
@@ -45,11 +66,86 @@
     const submitBtn = document.getElementById('submitAnimeList');
     const animeInput = document.getElementById('animeListInput');
     const messageDiv = document.getElementById('message');
+    const searchBtn = document.getElementById('searchBtn');
+    const animeSearchInput = document.getElementById('animeSearchInput');
+    const clearBtn = document.getElementById('clearBtn');
+    const searchResults = document.getElementById('searchResults');
 
     const showMessage = (msg, success=true) => {
       messageDiv.textContent = msg;
       messageDiv.style.color = success ? 'green' : 'red';
     }
+
+    // Handle Enter key press for search
+    animeSearchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        searchBtn.click();
+      }
+    });
+
+    // Search for existing anime with loading state
+    searchBtn.addEventListener('click', async () => {
+      const query = animeSearchInput.value.trim();
+      if (!query) {
+        showMessage('Please enter a search term', false);
+        return;
+      }
+      
+      // Show loading state
+      searchResults.innerHTML = '<p style="text-align: center;">Searching...</p>';
+      searchResults.style.display = 'block';
+      
+      try {
+        const res = await fetch(`/anime/search?query=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (res.ok) {
+          displaySearchResults(data);
+        } else {
+          showMessage(data.error || 'Error searching anime', false);
+        }
+      } catch (err) {
+        showMessage('Network error during search', false);
+        searchResults.style.display = 'none';
+      }
+    });
+
+    // Display search results with ability to add them
+    function displaySearchResults(animes) {
+      if (!animes || animes.length === 0) {
+        searchResults.innerHTML = '<p style="text-align: center; margin: 0;">No matching anime found.</p>';
+        searchResults.style.display = 'block';
+        return;
+      }
+
+      let html = '<h3 style="text-align: center; margin-top: 0; margin-bottom: 10px;">Matching Anime:</h3><ul style="list-style: none; padding: 0; margin: 0; display: table; width: 100%;">';
+      animes.forEach(anime => {
+        html += `<li style="padding: 10px; margin-bottom: 5px; background: rgba(60, 60, 80, 0.5); border-radius: 5px; display: table-row;">
+          <span style="display: table-cell; vertical-align: middle; padding-right: 10px;">${anime.name}</span>
+          <button onclick="addAnime('${anime.name}')" style="padding: 6px 12px; border-radius: 5px; background: linear-gradient(45deg, #43cea2, #185a9d); color: white; border: none; cursor: pointer; display: table-cell; vertical-align: middle;">Add</button>
+        </li>`;
+      });
+      html += '</ul>';
+      
+      searchResults.innerHTML = html;
+      searchResults.style.display = 'block';
+    }
+
+    // Add anime from search results to the input
+    window.addAnime = function(animeName) {
+      if (animeInput.value.trim() === '') {
+        animeInput.value = animeName;
+      } else {
+        animeInput.value += '\n' + animeName;
+      }
+      animeSearchInput.value = '';
+      searchResults.style.display = 'none';
+    };
+
+    // Clear the textarea
+    clearBtn.addEventListener('click', () => {
+      animeInput.value = '';
+      searchResults.style.display = 'none';
+    });
 
     submitBtn.addEventListener('click', async () => {
       const raw = animeInput.value.trim();
