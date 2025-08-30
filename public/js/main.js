@@ -96,46 +96,54 @@ async function logoutUser() {
   }
 }
 
-// Function to create and display a user's anime list
+// Function to create and display a user's anime list with enhanced styling
 function createUserAnimeList(userData) {
   const container = document.createElement('div');
   container.classList.add('user-anime-list');
 
-  // User header info
+  // User header info with better styling
   const header = document.createElement('h3');
   header.textContent = `${userData.user}`;
   container.appendChild(header);
 
-  const span = document.createElement('span');
-  span.classList.add('small');
-  span.textContent = `(Last Updated: ${new Date(userData.updatedAt).toLocaleString()})`;
-  container.appendChild(span)
+  const updatedAtSpan = document.createElement('span');
+  updatedAtSpan.classList.add('small');
+  updatedAtSpan.textContent = `(Last Updated: ${new Date(userData.updatedAt).toLocaleString()})`;
+  container.appendChild(updatedAtSpan);
 
-  // Anime Table
-  const table = document.createElement('table');
-  table.classList.add('anime-table');
+  // Create a more modern card-based layout for anime entries
+  const animeListContainer = document.createElement('div');
+  animeListContainer.style.display = 'grid';
+  animeListContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
+  animeListContainer.style.gap = '1rem';
+  animeListContainer.style.marginTop = '1rem';
 
   userData.animeList.forEach(anime => {
-    const row = document.createElement('tr');
+    const animeCard = document.createElement('div');
+    animeCard.classList.add('anime-card');
 
-    const nameCell = document.createElement('td');
-    nameCell.textContent = anime.name;
-    nameCell.style.textAlign = 'right'; // right-align anime name
-    row.appendChild(nameCell);
+    const animeName = document.createElement('div');
+    animeName.textContent = anime.name;
+    animeName.style.fontWeight = 'bold';
+    animeName.style.fontSize = '1.1rem';
+    animeName.style.color = '#9a4fc7';
+    animeName.style.marginBottom = '0.5rem';
 
-    const eloCell = document.createElement('td');
-    eloCell.textContent = anime.elo;
-    eloCell.style.textAlign = 'left'; // left-align Elo
-    row.appendChild(eloCell);
+    const eloValue = document.createElement('div');
+    eloValue.textContent = `ELO: ${anime.elo}`;
+    eloValue.style.fontWeight = 'bold';
+    eloValue.style.fontSize = '1rem';
 
-    table.appendChild(row);
+    animeCard.appendChild(animeName);
+    animeCard.appendChild(eloValue);
+    animeListContainer.appendChild(animeCard);
   });
 
-  container.appendChild(table);
+  container.appendChild(animeListContainer);
   return container;
 }
 
-// Example usage with fetched data
+// Example usage with fetched data - enhanced version for better display
 async function loadLatestLeaderboard() {
   try {
     const response = await fetch('/leaderboard/latest');
@@ -144,14 +152,18 @@ async function loadLatestLeaderboard() {
     const data = await response.json();
     const leaderboardContainer = document.getElementById('leaderboard');
 
-    // Clear previous content
-    leaderboardContainer.innerHTML = '';
+    // Clear previous content and show loading state
+    leaderboardContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Loading leaderboard...</p></div>';
 
-    // Add generated user anime list
-    leaderboardContainer.appendChild(createUserAnimeList(data));
+    // Add generated user anime list with a delay to show loading state
+    setTimeout(() => {
+      leaderboardContainer.innerHTML = '';
+      leaderboardContainer.appendChild(createUserAnimeList(data));
+    }, 500);
   } catch (err) {
     console.error(err);
-    alert('Error loading leaderboard data.');
+    const leaderboardContainer = document.getElementById('leaderboard');
+    leaderboardContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Error loading leaderboard data. Please try again later.</p></div>';
   }
 }
 

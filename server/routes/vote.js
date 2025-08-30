@@ -20,11 +20,13 @@ function expectScore(rA, rB) {
  * returns the user's anime pool (from ratings), plus a signature (ids, nonce, expiresAt, sig)
  * client uses this to locally pick pairs. On submit, client must include the same ids, nonce, expiresAt, sig.
  */
+/*
 router.get('/bootstrap', async (req, res) => {
+
   try {
     const db = getDb();
     const userUuid = getRequesterUuid(req);
-    if (!userUuid) return res.status(400).json({ error: 'No uuid provided (x-anon-uuid header or login required)' });
+    if (!userUuid) return res.status(400).json({ error: 'No uuid provided (login required)' });
 
     const ratings = await db.collection('ratings').aggregate([
       { $match: { userUuid } },
@@ -52,6 +54,7 @@ router.get('/bootstrap', async (req, res) => {
     res.status(500).json({ error: 'internal' });
   }
 });
+*/
 
 /**
  * GET /vote/get-pair

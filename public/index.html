@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anime Elo Leaderboard</title>
   <link rel="stylesheet" href="css/style.css">
-  <script defer src="https://analytics.theuntitledgoose.com/script.js" data-website-id="48332443-90a9-4972-8533-37fd15b1142d"></script>
+  <!-- <script defer src="https://analytics.theuntitledgoose.com/script.js" data-website-id="48332443-90a9-4972-8533-37fd15b1142d"></script> -->
 </head>
 <body>
   <!-- Dynamic Nav -->
@@ -22,7 +22,7 @@
     <h2>Most Recent User Ratings</h2>
     <div id="leaderboard">
       <ul id="leaderboardList">
-        <li>Loading leaderboard...</li>
+        <li style="text-align: center; padding: 2rem;">Loading leaderboard...</li>
       </ul>
     </div>
 
@@ -34,8 +34,8 @@
         <h2 id="authTitle">Login</h2>
 
         <div style="display: flex; flex-direction: column;">
-          <input type="text" id="usernameInput" placeholder="Username" required style="padding: 5px; margin: 5px;">
-          <input type="password" id="passwordInput" placeholder="Password" required style="padding: 5px; margin: 5px;">
+          <input type="text" id="usernameInput" placeholder="Username" required>
+          <input type="password" id="passwordInput" placeholder="Password" required>
         </div>
         <button id="authSubmitBtn">Login</button>
 

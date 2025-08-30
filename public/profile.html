@@ -24,18 +24,20 @@
     </header>
     <h2 id="username"></h2>
     <p id="lastUpdated"></p>
-    <table id="animeTable" border="1">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Anime</th>
-          <th>Elo</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <button id="addListBtn">Add List</button>
-    <a href="/index.html">← Back to Home</a>
+    <div style="overflow-x: auto;">
+      <table id="animeTable">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Anime</th>
+            <th>Elo</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <button id="addListBtn" class="btn-hover color-8">Add List</button>
   </div>
   <script src="/js/profile.js"></script>
   <script>
