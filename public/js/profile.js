@@ -31,16 +31,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const tableBody = document.querySelector('#animeTable tbody');
     tableBody.innerHTML = '';
-    data.animeList.forEach((anime, i) => {
+    
+    // Handle case where animeList might be undefined or not an array
+    if (data.animeList && Array.isArray(data.animeList)) {
+      data.animeList.forEach((anime, i) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${anime.name}</td>
+          <td>${anime.elo}</td>
+          <td><button class="deleteBtn" data-name="${anime.name}">DELETE</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    } else {
+      // Handle case where there's no anime list
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${anime.name}</td>
-        <td>${anime.elo}</td>
-        <td><button class="deleteBtn" data-name="${anime.name}">DELETE</button></td>
-      `;
+      row.innerHTML = `<td colspan="4" style="text-align: center;">No anime data available</td>`;
       tableBody.appendChild(row);
-    });
+    }
 
     // Add event listeners for delete buttons
     document.querySelectorAll('.deleteBtn').forEach(btn => {

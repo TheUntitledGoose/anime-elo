@@ -49,8 +49,12 @@
     <!-- Search Results Section -->
     <div id="searchResults" style="margin-top: 15px; margin-bottom: 15px; display: none; background: rgba(40, 40, 60, 0.6); padding: 15px; border-radius: 10px;"></div>
 
-    <!-- Textarea Section -->
-    <textarea id="animeListInput" placeholder="Enter anime names separated by commas or newlines" rows="10" style="width: 100%; max-width: 600px; margin: 0 auto; padding: 12px; border-radius: 8px; border: 1px solid #4a4a6a; background: rgba(20, 20, 35, 0.7); color: white;"></textarea>
+    <!-- Textarea Section with Autocomplete -->
+    <div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">
+      <textarea id="animeListInput" placeholder="Enter anime names separated by commas or newlines" rows="10" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #4a4a6a; background: rgba(20, 20, 35, 0.7); color: white;"></textarea>
+      <!-- Autocomplete suggestions dropdown -->
+      <div id="autocompleteSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: rgba(40, 40, 60, 0.9); border-radius: 8px; margin-top: 5px; display: none; z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+    </div>
 
     <!-- Action Buttons -->
     <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
@@ -70,6 +74,7 @@
     const animeSearchInput = document.getElementById('animeSearchInput');
     const clearBtn = document.getElementById('clearBtn');
     const searchResults = document.getElementById('searchResults');
+    const autocompleteSuggestions = document.getElementById('autocompleteSuggestions');
 
     const showMessage = (msg, success=true) => {
       messageDiv.textContent = msg;
@@ -87,6 +92,7 @@
     searchBtn.addEventListener('click', async () => {
       const query = animeSearchInput.value.trim();
       if (!query) {
+        searchResults.style.display = 'none';
         showMessage('Please enter a search term', false);
         return;
       }
@@ -141,10 +147,138 @@
       searchResults.style.display = 'none';
     };
 
+    // Autocomplete functionality
+    let currentSuggestions = [];
+    let selectedIndex = -1;
+
+    // Function to update autocomplete suggestions
+    async function updateAutocomplete(query) {
+      if (query.length < 2) {
+        autocompleteSuggestions.style.display = 'none';
+        return;
+      }
+
+      try {
+        // Make API call to search for anime names matching the query
+        const res = await fetch(`/anime/search?query=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        
+        if (res.ok && data && data.length > 0) {
+          currentSuggestions = data.slice(0, 10); // Limit to 10 suggestions
+          
+          let html = '';
+          currentSuggestions.forEach((anime, index) => {
+            html += `<div style="padding: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); ${index === selectedIndex ? 'background: rgba(64, 64, 64, 0.7);' : ''}" data-index="${index}">${anime.name || anime}</div>`;
+          });
+          
+          autocompleteSuggestions.innerHTML = html;
+          autocompleteSuggestions.style.display = 'block';
+          selectedIndex = -1; // Reset selection when new suggestions appear
+        } else {
+          autocompleteSuggestions.innerHTML = '<p style="padding: 10px; margin: 0; text-align: center;">No matching anime found</p>';
+          autocompleteSuggestions.style.display = 'block';
+        }
+      } catch (err) {
+        console.error('Error fetching autocomplete suggestions:', err);
+        autocompleteSuggestions.innerHTML = '<p style="padding: 10px; margin: 0; text-align: center;">Error loading suggestions</p>';
+        autocompleteSuggestions.style.display = 'block';
+      }
+    }
+
+    // Handle input in textarea for autocomplete
+    animeInput.addEventListener('input', function() {
+      const value = this.value.trim();
+      // We'll show suggestions based on the last word entered (separated by commas or newlines)
+      const lines = value.split(/\n|,/).filter(line => line.trim() !== '');
+      const lastLine = lines.length > 0 ? lines[lines.length - 1] : '';
+      const lastWord = lastLine.split(' ').pop().trim();
+      
+      if (lastWord.length >= 2) {
+        updateAutocomplete(lastWord);
+      } else {
+        autocompleteSuggestions.style.display = 'none';
+      }
+    });
+
+    // Handle key events for autocomplete navigation
+    animeInput.addEventListener('keydown', function(e) {
+      if (autocompleteSuggestions.style.display === 'block' && currentSuggestions.length > 0) {
+        switch(e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, currentSuggestions.length - 1);
+            updateAutocompleteDisplay();
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, -1);
+            updateAutocompleteDisplay();
+            break;
+          case 'Enter':
+            e.preventDefault();
+            if (selectedIndex >= 0) {
+              selectAutocompleteSuggestion(selectedIndex);
+            } else {
+              // If no selection, just proceed with normal input
+              autocompleteSuggestions.style.display = 'none';
+            }
+            break;
+          case 'Escape':
+            autocompleteSuggestions.style.display = 'none';
+            selectedIndex = -1;
+            break;
+        }
+      }
+    });
+
+    // Update the display of selected suggestion in autocomplete
+    function updateAutocompleteDisplay() {
+      const items = autocompleteSuggestions.querySelectorAll('div');
+      items.forEach((item, index) => {
+        if (index === selectedIndex) {
+          item.style.background = 'rgba(64, 64, 64, 0.7)';
+        } else {
+          item.style.background = '';
+        }
+      });
+    }
+
+    // Select a suggestion from autocomplete
+    function selectAutocompleteSuggestion(index) {
+      if (index >= 0 && index < currentSuggestions.length) {
+        const selectedAnime = currentSuggestions[index];
+        // Extract the name properly whether it's an object or string
+        const animeName = typeof selectedAnime === 'object' ? selectedAnime.name : selectedAnime;
+        const value = animeInput.value.trim();
+        const lines = value.split(/\n|,/).filter(line => line.trim() !== '');
+        const lastLine = lines.length > 0 ? lines[lines.length - 1] : '';
+        const words = lastLine.split(' ');
+        const lastWord = words.pop().trim();
+        
+        // Replace the last word with selected anime name
+        const newLastLine = [...words, animeName].join(' ');
+        const newLines = [...lines.slice(0, -1), newLastLine];
+        const newValue = newLines.join('\n');
+        
+        animeInput.value = newValue;
+        autocompleteSuggestions.style.display = 'none';
+        selectedIndex = -1;
+      }
+    }
+
+    // Click handler for autocomplete suggestions
+    autocompleteSuggestions.addEventListener('click', function(e) {
+      if (e.target.tagName === 'DIV') {
+        const index = parseInt(e.target.dataset.index);
+        selectAutocompleteSuggestion(index);
+      }
+    });
+
     // Clear the textarea
     clearBtn.addEventListener('click', () => {
       animeInput.value = '';
       searchResults.style.display = 'none';
+      autocompleteSuggestions.style.display = 'none';
     });
 
     submitBtn.addEventListener('click', async () => {

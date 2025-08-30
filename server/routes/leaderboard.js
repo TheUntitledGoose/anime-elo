@@ -4,27 +4,34 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-// Get the most recent leaderboard submission
+// Get the most recent leaderboard submission for all users
 router.get('/latest', async (req, res) => {
   try {
-    const latestList = await UserList.findOne()
+    // Get all user lists sorted by updatedAt descending
+    const userLists = await UserList.find()
       .sort({ updatedAt: -1 })
       .lean();
-
-    if (!latestList) {
-      return res.status(404).json({ error: 'No leaderboard found' });
+    
+    if (!userLists || userLists.length === 0) {
+      return res.status(404).json({ error: 'No leaderboard data found' });
     }
 
-    const user = await User.findOne({ _id: latestList.userUuid }).lean();
-    const username = user?.username || 'Unknown User';
+    // Get corresponding user details for each list
+    const userListsWithUsers = await Promise.all(userLists.map(async (list) => {
+      const user = await User.findOne({ _id: list.userUuid }).lean();
+      const username = user?.username || 'Unknown User';
+      
+      // Sort anime by ELO descending
+      const sortedAnime = [...list.animeList].sort((a, b) => b.elo - a.elo);
+      
+      return {
+        user: username,
+        updatedAt: list.updatedAt,
+        animeList: sortedAnime
+      };
+    }));
 
-    const sortedAnime = [...latestList.animeList].sort((a, b) => b.elo - a.elo);
-
-    res.json({
-      user: username,
-      updatedAt: latestList.updatedAt,
-      animeList: sortedAnime
-    });
+    res.json(userListsWithUsers);
   } catch (err) {
     console.error('Error fetching latest leaderboard:', err);
     res.status(500).json({ error: 'Internal server error' });

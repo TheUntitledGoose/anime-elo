@@ -118,26 +118,36 @@ function createUserAnimeList(userData) {
   animeListContainer.style.gap = '1rem';
   animeListContainer.style.marginTop = '1rem';
 
-  userData.animeList.forEach(anime => {
-    const animeCard = document.createElement('div');
-    animeCard.classList.add('anime-card');
+  // Handle case where animeList might be undefined
+  if (userData.animeList && Array.isArray(userData.animeList)) {
+    userData.animeList.forEach(anime => {
+      const animeCard = document.createElement('div');
+      animeCard.classList.add('anime-card');
 
-    const animeName = document.createElement('div');
-    animeName.textContent = anime.name;
-    animeName.style.fontWeight = 'bold';
-    animeName.style.fontSize = '1.1rem';
-    animeName.style.color = '#9a4fc7';
-    animeName.style.marginBottom = '0.5rem';
+      const animeName = document.createElement('div');
+      animeName.textContent = anime.name;
+      animeName.style.fontWeight = 'bold';
+      animeName.style.fontSize = '1.1rem';
+      animeName.style.color = '#9a4fc7';
+      animeName.style.marginBottom = '0.5rem';
 
-    const eloValue = document.createElement('div');
-    eloValue.textContent = `ELO: ${anime.elo}`;
-    eloValue.style.fontWeight = 'bold';
-    eloValue.style.fontSize = '1rem';
+      const eloValue = document.createElement('div');
+      eloValue.textContent = `ELO: ${anime.elo}`;
+      eloValue.style.fontWeight = 'bold';
+      eloValue.style.fontSize = '1rem';
 
-    animeCard.appendChild(animeName);
-    animeCard.appendChild(eloValue);
-    animeListContainer.appendChild(animeCard);
-  });
+      animeCard.appendChild(animeName);
+      animeCard.appendChild(eloValue);
+      animeListContainer.appendChild(animeCard);
+    });
+  } else {
+    // Handle case where there's no anime list
+    const noAnimeMessage = document.createElement('div');
+    noAnimeMessage.textContent = 'No anime data available';
+    noAnimeMessage.style.textAlign = 'center';
+    noAnimeMessage.style.padding = '1rem';
+    animeListContainer.appendChild(noAnimeMessage);
+  }
 
   container.appendChild(animeListContainer);
   return container;
@@ -158,7 +168,18 @@ async function loadLatestLeaderboard() {
     // Add generated user anime list with a delay to show loading state
     setTimeout(() => {
       leaderboardContainer.innerHTML = '';
-      leaderboardContainer.appendChild(createUserAnimeList(data));
+      
+      // Handle case where data is an array of user lists (multiple users)
+      if (Array.isArray(data) && data.length > 0) {
+        data.forEach(userData => {
+          leaderboardContainer.appendChild(createUserAnimeList(userData));
+        });
+      } else if (data && typeof data === 'object') {
+        // Single user data case
+        leaderboardContainer.appendChild(createUserAnimeList(data));
+      } else {
+        leaderboardContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>No leaderboard data available</p></div>';
+      }
     }, 500);
   } catch (err) {
     console.error(err);

@@ -65,7 +65,8 @@ router.get('/get-pair', async (req, res) => {
     if (!req.session.user.userId) return res.status(401).json({ error: 'Login required' });
 
     const db = getDb();
-    const userList = await db.collection('userlists').findOne({ userId: req.session.userId });
+    // Fixed: Use userUuid instead of userId to match the UserList model
+    const userList = await db.collection('userlists').findOne({ userUuid: req.session.user.userId });
 
     if (!userList || userList.animeList.length < 2) {
       return res.json({ error: 'Not enough anime to vote', animeList: [] });
@@ -242,7 +243,8 @@ router.post('/submit', async (req, res) => {
     if (!winner || !loser) return res.status(400).json({ error: 'Winner and loser required' });
 
     const db = getDb();
-    const userList = await db.collection('userlists').findOne({ userId: req.session.userId });
+    // Fixed: Use userUuid instead of userId to match the UserList model
+    const userList = await db.collection('userlists').findOne({ userUuid: req.session.user.userId });
     if (!userList) return res.status(400).json({ error: 'User anime list not found' });
 
     const animeA = userList.animeList.find(a => a.name === winner);
@@ -259,8 +261,9 @@ router.post('/submit', async (req, res) => {
     animeA.elo = Math.round(Ra + K * (1 - expectedA));
     animeB.elo = Math.round(Rb + K * (0 - expectedB));
 
+// Fixed: Use userUuid instead of userId to match the UserList model
     await db.collection('userlists').updateOne(
-      { userId: req.session.userId },
+      { userUuid: req.session.user.userId },
       { $set: { animeList: userList.animeList, updatedAt: new Date() } }
     );
 
