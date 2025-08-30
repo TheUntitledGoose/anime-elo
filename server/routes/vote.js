@@ -8,7 +8,7 @@ const router = express.Router();
 const BOOTSTRAP_TTL_MS = 10 * 60 * 1000;
 
 function getRequesterUuid(req) {
-  return req.session?.user?.uuid || req.headers['x-anon-uuid'];
+  return req.session?.user?.userId;
 }
 
 function expectScore(rA, rB) {
@@ -54,11 +54,36 @@ router.get('/bootstrap', async (req, res) => {
 });
 
 /**
+ * GET /vote/get-pair
+ * Returns two random anime from the logged-in user's list for voting
+ */
+router.get('/get-pair', async (req, res) => {
+  try {
+    if (!req.session.user.userId) return res.status(401).json({ error: 'Login required' });
+
+    const db = getDb();
+    const userList = await db.collection('userlists').findOne({ userId: req.session.userId });
+
+    if (!userList || userList.animeList.length < 2) {
+      return res.json({ error: 'Not enough anime to vote', animeList: [] });
+    }
+
+    const shuffled = userList.animeList.sort(() => 0.5 - Math.random());
+    const [animeA, animeB] = shuffled.slice(0, 2);
+
+    res.json({ animeA, animeB });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * POST /vote/submit
  * Body:
  *  { animeA, animeB, winner, mode='elo'|'eloVotes', k?, aVotes?, bVotes?, ids, nonce, expiresAt, sig }
  */
-router.post('/submit', async (req, res) => {
+router.post('/submit-old', async (req, res) => {
   try {
     const db = getDb();
     const userUuid = getRequesterUuid(req);
@@ -199,5 +224,56 @@ router.post('/submit', async (req, res) => {
     res.status(500).json({ error: 'internal' });
   }
 });
+
+
+/**
+ * POST /vote/submit
+ * body: { winner: "animeName", loser: "animeName" }
+ * Updates Elo values for the winner and loser anime in the user's list
+ */
+router.post('/submit', async (req, res) => {
+  try {
+    if (!req.session.user.userId) return res.status(401).json({ error: 'Login required' });
+
+    const { winner, loser } = req.body;
+    if (!winner || !loser) return res.status(400).json({ error: 'Winner and loser required' });
+
+    const db = getDb();
+    const userList = await db.collection('userlists').findOne({ userId: req.session.userId });
+    if (!userList) return res.status(400).json({ error: 'User anime list not found' });
+
+    const animeA = userList.animeList.find(a => a.name === winner);
+    const animeB = userList.animeList.find(a => a.name === loser);
+    if (!animeA || !animeB) return res.status(400).json({ error: 'Anime not in your list' });
+
+    // Elo calculation
+    const K = 32;
+    const Ra = animeA.elo;
+    const Rb = animeB.elo;
+    const expectedA = 1 / (1 + 10 ** ((Rb - Ra) / 400));
+    const expectedB = 1 - expectedA;
+
+    animeA.elo = Math.round(Ra + K * (1 - expectedA));
+    animeB.elo = Math.round(Rb + K * (0 - expectedB));
+
+    await db.collection('userlists').updateOne(
+      { userId: req.session.userId },
+      { $set: { animeList: userList.animeList, updatedAt: new Date() } }
+    );
+
+    await db.collection('voteLogs').insertOne({
+      userId: req.session.userId,
+      winner,
+      loser,
+      createdAt: new Date()
+    });
+
+    res.json({ ok: true, animeList: userList.animeList });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 export default router;

@@ -13,11 +13,11 @@ let isLogin = true; // toggle login/register
 
 
 // --- Modal Toggle ---
-loginBtn.addEventListener('click', () => authModal.classList.remove('hidden'));
-closeModal.addEventListener('click', () => authModal.classList.add('hidden'));
+if (loginBtn) loginBtn.addEventListener('click', () => authModal.classList.remove('hidden'));
+if (closeModal) closeModal.addEventListener('click', () => authModal.classList.add('hidden'));
 
 // --- Toggle Login/Register ---
-toggleAuthBtn.addEventListener('click', () => {
+if (toggleAuthBtn) toggleAuthBtn.addEventListener('click', () => {
   isLogin = !isLogin;
   authTitle.textContent = isLogin ? 'Login' : 'Register';
   authSubmitBtn.textContent = isLogin ? 'Login' : 'Register';
@@ -30,7 +30,7 @@ toggleAuthBtn.addEventListener('click', () => {
 });
 
 // --- Auth Submit ---
-authSubmitBtn.addEventListener('click', async () => {
+if (authSubmitBtn) authSubmitBtn.addEventListener('click', async () => {
   const username = usernameInput.value.trim();
   const password = passwordInput.value.trim();
   if (!username || !password) return console.log('Username and password required', false);
@@ -49,7 +49,7 @@ authSubmitBtn.addEventListener('click', async () => {
   if (res.ok) {
     console.log(isLogin ? `Logged in as ${data.username}` : `Registered as ${data.username}`);
     setTimeout(() => {
-      window.location.href = '/add-list.html'; // redirect to anime list page
+      window.location.href = '/profile.html'; // redirect to anime list page
     }, 500);
   } else {
     authSubmitBtn.disabled = false;
@@ -65,33 +65,32 @@ async function checkAuthStatus() {
     const loginBtn = document.getElementById('loginBtn');
     const profileBtn = document.getElementById('profileBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-
-    console.log(data);
+    const homeBtn = document.getElementById('homeBtn');
 
     if (data.loggedIn) {
-      loginBtn.classList.add('hidden');
-      profileBtn.classList.remove('hidden');
-      logoutBtn.classList.remove('hidden');
+      loginBtn?.classList.add('hidden');
+      profileBtn?.classList.remove('hidden');
+      logoutBtn?.classList.remove('hidden');
 
-      profileBtn.onclick = () => {
+      if (profileBtn) profileBtn.onclick = () => {
         window.location.href = `/profile.html?user=${encodeURIComponent(data.username)}`;
       };
-      logoutBtn.onclick = () => logoutUser();
+      if (logoutBtn) logoutBtn.onclick = () => logoutUser();
+      if (homeBtn) homeBtn.onclick = () => window.location.href = '/';
     } else {
-      loginBtn.classList.remove('hidden');
-      profileBtn.classList.add('hidden');
-      logoutBtn.classList.add('hidden');
+      loginBtn?.classList.remove('hidden');
+      profileBtn?.classList.add('hidden');
+      logoutBtn?.classList.add('hidden');
     }
   } catch (err) {
     console.error('Error checking login status:', err);
   }
 }
 
-
 async function logoutUser() {
   try {
-    await fetch('/logout', { method: 'POST', credentials: 'include' });
-    location.reload();
+    await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+    window.location.href = '/';
   } catch (err) {
     console.error('Logout failed:', err);
   }
@@ -149,6 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   checkAuthStatus();
 
-  loadLatestLeaderboard();
+  if (document.getElementById('leaderboard')) loadLatestLeaderboard();
 
 })

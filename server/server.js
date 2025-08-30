@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import animeRoutes from './routes/anime.js';
 import profileRoutes from './routes/profile.js';
 import leaderboardRoutes from './routes/leaderboard.js';
+import voteRoutes from './routes/vote.js';
 import { initDb } from './db.js';
 
 dotenv.config({ path: 'server/.env' });
@@ -64,6 +65,7 @@ initDb()
     app.use('/anime', animeRoutes);
     app.use('/profile', profileRoutes);
     app.use('/leaderboard', leaderboardRoutes);
+    app.use('/vote', voteRoutes);
     
     app.get('/ping', (req, res) => res.json({ message: 'pong' }));
 

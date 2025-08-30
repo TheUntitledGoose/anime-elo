@@ -4,14 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Profile</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-  <header>
-    <h1>Your Anime Profile</h1>
-    <a href="/index.html">← Back to Home</a>
-  </header>
-  <main>
+
+  <!-- Dynamic Nav -->
+  <div id="navContainer">
+    <button id="homeBtn" class="btn-hover color-8">Home</button>
+    <button id="logoutBtn" class="hidden">Logout</button>
+  </div>
+
+  <script src="js/main.js"></script>
+
+  <div class="container">
+    <header>
+      <h1>Your Anime Profile</h1>
+      <button id="voteBtn" class="battle">Battle Arena</button>
+    </header>
     <h2 id="username"></h2>
     <p id="lastUpdated"></p>
     <table id="animeTable" border="1">
@@ -24,7 +33,18 @@
       </thead>
       <tbody></tbody>
     </table>
-  </main>
+    <button id="addListBtn">Add List</button>
+    <a href="/index.html">← Back to Home</a>
+  </div>
   <script src="/js/profile.js"></script>
+  <script>
+    document.getElementById('addListBtn').addEventListener('click', () => {
+      window.location.href = '/add-list.html';
+    });
+
+    document.getElementById('voteBtn').addEventListener('click', () => {
+      window.location.href = '/vote.html';
+    });
+  </script>
 </body>
 </html>

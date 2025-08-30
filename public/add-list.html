@@ -7,13 +7,39 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- Dynamic Nav -->
+  <div id="navContainer">
+    <button id="loginBtn" class="btn-hover color-8">Login</button>
+    <button id="profileBtn" class="hidden">Profile</button>
+    <button id="logoutBtn" class="hidden">Logout</button>
+  </div>
+
+  <!-- Login/Register Modal -->
+  <div id="authModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+
+      <h2 id="authTitle">Login</h2>
+
+      <div style="display: flex; flex-direction: column;">
+        <input type="text" id="usernameInput" placeholder="Username" required style="padding: 5px; margin: 5px;">
+        <input type="password" id="passwordInput" placeholder="Password" required style="padding: 5px; margin: 5px;">
+      </div>
+      <button id="authSubmitBtn">Login</button>
+
+      <p id="toggleAuthText">Don't have an account? <button id="toggleAuthBtn">Register</button></p>
+      <div id="message"></div>
+    </div>
+  </div>
+
   <div class="container">
     <h1>Add Your Anime List</h1>
     <textarea id="animeListInput" placeholder="Enter anime names separated by commas or newlines" rows="10"></textarea>
-    <button id="submitAnimeList">Submit List</button>
+    <button id="submitAnimeList" style="width: 100px;">Submit List</button>
     <div id="message"></div>
   </div>
 
+  <script src="js/main.js"></script>
   <script>
     const submitBtn = document.getElementById('submitAnimeList');
     const animeInput = document.getElementById('animeListInput');
@@ -36,7 +62,10 @@
         body: JSON.stringify({ anime: list })
       });
       const data = await res.json();
-      if (res.ok) showMessage('Anime list submitted!');
+      if (res.ok) {
+        showMessage('Anime list submitted!');
+        window.location.href = '/profile.html'
+      }
       else showMessage(data.error, false);
     });
   </script>

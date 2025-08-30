@@ -7,7 +7,7 @@ import { slugify, normalizeList } from '../utils.js';
 const router = express.Router();
 
 function getRequesterUuid(req) {
-  return req.session?.userId;
+  return req.session?.user.userId;
 }
 
 /**

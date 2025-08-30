@@ -29,14 +29,6 @@ input {
   font-size: 1rem;
 }
 
-button {
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  margin-top: 0.5rem;
-  cursor: pointer;
-  background-color: #45a049;
-}
-
 #logoutBtn {
   display: block;
   background: #e74c3c;
@@ -187,9 +179,9 @@ button {
 
 /* Buttons */
 button {
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  margin-top: 0.5rem;
+  margin: auto;
+  margin-top: 10px;
+  margin-bottom: 10px;
   cursor: pointer;
 }
 
@@ -240,10 +232,38 @@ h3 {
   margin: 0;
 }
 
+th, table, td {
+  border: none;
+  border-collapse: collapse;
+}
+
+tr {
+  border-bottom: 1px solid white;
+}
+
 ul {
   padding: 0;
 }
 
 textarea {
   margin: auto;
+}
+
+.deleteBtn {
+  background: linear-gradient(#d22a2a, #931d1d);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.battle {
+  width: 200px;
+  height: 75px;
+  font-size: 25px;
+  border-radius: 25px;
+  border: none;
+  color: #c05f00;
+  background: linear-gradient(#ffed29, #e4a500);
+  font-weight: 700;
 }

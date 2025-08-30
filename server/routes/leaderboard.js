@@ -15,7 +15,7 @@ router.get('/latest', async (req, res) => {
       return res.status(404).json({ error: 'No leaderboard found' });
     }
 
-    const user = await User.findOne({ uuid: latestList.userUuid }).lean();
+    const user = await User.findOne({ _id: latestList.userUuid }).lean();
     const username = user?.username || 'Unknown User';
 
     const sortedAnime = [...latestList.animeList].sort((a, b) => b.elo - a.elo);
@@ -41,22 +41,23 @@ router.get('/user/:username', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const userList = await UserList.findOne({ userUuid: user.uuid }).lean();
-    if (!userList) {
-      return res.status(404).json({ error: 'No anime list found for this user' });
-    }
+    console.log()
+    const userList = await UserList.findOne({ userUuid: user._id }).lean();
 
-    const sortedAnime = [...userList.animeList].sort((a, b) => b.elo - a.elo);
+    // If no list found, return empty array instead of 404
+    const animeList = userList ? [...userList.animeList].sort((a, b) => b.elo - a.elo) : [];
+    const updatedAt = userList ? userList.updatedAt : null;
 
     res.json({
       user: username,
-      updatedAt: userList.updatedAt,
-      animeList: sortedAnime
+      updatedAt,
+      animeList
     });
   } catch (err) {
     console.error('Error fetching user profile:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 export default router;
