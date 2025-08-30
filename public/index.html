@@ -7,19 +7,23 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- Dynamic Nav -->
+  <div id="navContainer">
+    <button id="loginBtn" class="btn-hover color-8">Login</button>
+    <button id="profileBtn" class="hidden">Profile</button>
+    <button id="logoutBtn" class="hidden">Logout</button>
+  </div>
+
   <div class="container">
     <h1>Anime Elo Leaderboard</h1>
 
     <!-- Leaderboard -->
+    <h2>Most Recent User Ratings</h2>
     <div id="leaderboard">
-      <h2>Most Recent Users</h2>
       <ul id="leaderboardList">
         <li>Loading leaderboard...</li>
       </ul>
     </div>
-
-    <!-- Login/Register button -->
-    <button id="loginBtn">Add Your List</button>
 
     <!-- Login/Register Modal -->
     <div id="authModal" class="modal hidden">
@@ -28,8 +32,10 @@
 
         <h2 id="authTitle">Login</h2>
 
-        <input type="text" id="usernameInput" placeholder="Username" required>
-        <input type="password" id="passwordInput" placeholder="Password" required>
+        <div style="display: flex; flex-direction: column;">
+          <input type="text" id="usernameInput" placeholder="Username" required style="padding: 5px; margin: 5px;">
+          <input type="password" id="passwordInput" placeholder="Password" required style="padding: 5px; margin: 5px;">
+        </div>
         <button id="authSubmitBtn">Login</button>
 
         <p id="toggleAuthText">Don't have an account? <button id="toggleAuthBtn">Register</button></p>

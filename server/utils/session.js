@@ -15,7 +15,9 @@ const sessionMiddleware = session({
   }),
   cookie: {
     maxAge: 1000 * 60 * 60 * 24, // 1 day
-    httpOnly: true
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false
   }
 });
 

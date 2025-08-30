@@ -38,16 +38,26 @@ router.post('/login', async (req, res) => {
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) return res.status(400).json({ error: 'Invalid username or password' });
 
-    req.session.userId = user._id;
-    res.json({ message: 'Login successful', username: user.username });
+    req.session.user = { userId: user._id.toString(), username: user.username };
+    await req.session.save();  // important!
+    res.json({ message: 'Login successful', ok: true, username: user.username });
   } catch (err) {
     res.status(500).json({ error: 'Login failed', details: err.message });
   }
 });
 
 router.get('/me', (req, res) => {
-  res.json({ me: req.session.user || null });
+  if (req.session && req.session.user) {
+    return res.json({
+      loggedIn: true,
+      username: req.session.user.username,
+      id: req.session.user.id // changed from uuid to id
+    });
+  }
+  return res.json({ loggedIn: false });
 });
+
+
 
 // Logout
 router.post('/logout', (req, res) => {

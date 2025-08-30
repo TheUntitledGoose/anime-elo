@@ -89,7 +89,7 @@ router.post('/submit', async (req, res) => {
 
     // fetch rating rows (create if missing)
     const ratingCol = db.collection('ratings');
-    const animeCol = db.collection('anime');
+    const animeCol = db.collection('animes');
 
     const aId = toObjectId(animeA);
     const bId = toObjectId(animeB);

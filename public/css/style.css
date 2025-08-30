@@ -1,22 +1,135 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f2f2f2;
+  background: #2c2c2c;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  color: white;
 }
 
 .container {
-  background: white;
+  background: #333;
   padding: 2rem;
-  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  max-width: 1000px;
   width: 90%;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
   border-radius: 8px;
   text-align: center;
 }
+
+input {
+  display: block;
+  width: 90%;
+  margin: 0.5rem auto;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  background-color: #45a049;
+}
+
+#logoutBtn {
+  display: block;
+  background: #e74c3c;
+  color: white;
+  border: none;
+}
+
+#profileBtn {
+  background-color: #1E90FF; /* DodgerBlue */
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  /* transition: background 0.2s, transform 0.1s; */
+}
+
+#profileBtn:hover {
+  background-color: #187bcd; /* Slightly darker blue */
+  transform: translateY(-2px);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  transition: all .1s ease-in-out;
+}
+
+#profileBtn:active {
+  transform: translateY(0);
+}
+
+
+#navContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 1000;
+}
+
+#navContainer button {
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  /* transition: background 0.2s; */
+}
+
+.btn-hover.color-8 {
+  background-image: linear-gradient(to right, #29323c, #485563, #2b5876, #4e4376);
+  box-shadow: 0 4px 15px 0 rgba(45, 54, 65, 0.75);
+}
+
+
+.btn-hover:hover {
+  background-position: 100% 0;
+  moz-transition: all .4s ease-in-out;
+  -o-transition: all .4s ease-in-out;
+  -webkit-transition: all .4s ease-in-out;
+  transition: all .4s ease-in-out;
+}
+
+.btn-hover {
+  border: none;
+  background-size: 300% 100%;
+
+  border-radius: 50px;
+  moz-transition: all .4s ease-in-out;
+  -o-transition: all .4s ease-in-out;
+  -webkit-transition: all .4s ease-in-out;
+  transition: all .4s ease-in-out;
+}
+
+.btn-hover:focus {
+  outline: none;
+}
+
+button {
+  width: 75px;
+  height: 30px;
+}
+
+.hidden {
+  visibility: hidden;
+  width: 0;
+}
+
 
 /* Leaderboard */
 #leaderboardList {
@@ -29,6 +142,48 @@ body {
   padding: 0.3rem 0;
   border-bottom: 1px solid #ddd;
 }
+
+#leaderboard {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.user-anime-list {
+  margin: 20px;
+  background-color: #ddd;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.user-anime-list {
+  background: #656565;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.user-anime-list h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.user-anime-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.user-anime-list ul li {
+  padding: 4px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.user-anime-list ul li:last-child {
+  border-bottom: none;
+}
+
 
 /* Buttons */
 button {
@@ -56,7 +211,7 @@ button {
 }
 
 .modal-content {
-  background: white;
+  background: rgb(48, 48, 48);
   padding: 2rem;
   max-width: 400px;
   width: 90%;
@@ -75,4 +230,20 @@ button {
 
 .hidden {
   display: none;
+}
+
+.small {
+  font-size: xx-small;
+}
+
+h3 {
+  margin: 0;
+}
+
+ul {
+  padding: 0;
+}
+
+textarea {
+  margin: auto;
 }
