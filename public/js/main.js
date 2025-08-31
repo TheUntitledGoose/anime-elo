@@ -122,8 +122,8 @@ function createUserAnimeList(userData) {
   animeListContainer.style.gap = '1rem';
   animeListContainer.style.marginTop = '1rem';
 
-  // Handle case where animeList might be undefined
-  if (userData.animeList && Array.isArray(userData.animeList)) {
+  // Handle case where animeList might be undefined or not an array
+  if (userData.animeList && Array.isArray(userData.animeList) && userData.animeList.length > 0) {
     // Only display top 5 animes
     const top5Animes = userData.animeList.slice(0, 5);
     top5Animes.forEach(anime => {
@@ -147,7 +147,7 @@ function createUserAnimeList(userData) {
       animeListContainer.appendChild(animeCard);
     });
   } else {
-    // Handle case where there's no anime list
+    // Handle case where there's no anime list or it's empty
     const noAnimeMessage = document.createElement('div');
     noAnimeMessage.textContent = 'No anime data available';
     noAnimeMessage.style.textAlign = 'center';
