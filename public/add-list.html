@@ -81,6 +81,25 @@
       messageDiv.style.color = success ? 'green' : 'red';
     }
 
+    // Function to clear lines containing duplicates from the input
+    function clearDuplicateLines(duplicates) {
+      if (!duplicates || duplicates.length === 0) return;
+      
+      const lines = animeInput.value.split('\n');
+      const filteredLines = lines.filter(line => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return true; // Keep empty lines
+        
+        // Check if this line contains any of the duplicate names (case insensitive)
+        return !duplicates.some(duplicate => {
+          return trimmedLine.toLowerCase().includes(duplicate.toLowerCase());
+        });
+      });
+      
+      // Update the textarea with only non-duplicate lines
+      animeInput.value = filteredLines.join('\n');
+    }
+
     // Handle Enter key press for search
     animeSearchInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
@@ -150,6 +169,18 @@
     // Autocomplete functionality
     let currentSuggestions = [];
     let selectedIndex = -1;
+    let autocompleteTimeout;
+
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        const timeout = setTimeout(later, wait);
+      };
+    }
 
     // Function to update autocomplete suggestions
     async function updateAutocomplete(query) {
@@ -157,6 +188,10 @@
         autocompleteSuggestions.style.display = 'none';
         return;
       }
+
+      // Show loading state immediately
+      autocompleteSuggestions.innerHTML = '<p style="padding: 10px; margin: 0; text-align: center;">Loading...</p>';
+      autocompleteSuggestions.style.display = 'block';
 
       try {
         // Make API call to search for anime names matching the query
@@ -185,16 +220,40 @@
       }
     }
 
+    // Debounced version of updateAutocomplete
+    // const debouncedUpdateAutocomplete = debounce(updateAutocomplete, 500);
+
     // Handle input in textarea for autocomplete
     animeInput.addEventListener('input', function() {
-      const value = this.value.trim();
-      // We'll show suggestions based on the last word entered (separated by commas or newlines)
-      const lines = value.split(/\n|,/).filter(line => line.trim() !== '');
-      const lastLine = lines.length > 0 ? lines[lines.length - 1] : '';
-      const lastWord = lastLine.split(' ').pop().trim();
+      const cursorPos = this.selectionStart;
+      const value = this.value;
       
-      if (lastWord.length >= 2) {
-        updateAutocomplete(lastWord);
+      // Find the line where the cursor is currently located
+      const lines = value.split('\n');
+      let currentLineIndex = 0;
+      let charCount = 0;
+      
+      for (let i = 0; i < lines.length; i++) {
+        charCount += lines[i].length + 1; // +1 for the newline character
+        if (charCount > cursorPos) {
+          currentLineIndex = i;
+          break;
+        }
+      }
+      
+      // Get the current line content
+      const currentLine = lines[currentLineIndex];
+      
+      // Find the word at the cursor position in the current line
+      let currentWordStart = currentLine.lastIndexOf(' ', cursorPos - (charCount - lines[currentLineIndex].length - 1)) + 1;
+      let currentWordEnd = currentLine.indexOf(' ', cursorPos);
+      if (currentWordEnd === -1) currentWordEnd = currentLine.length;
+      
+      const currentWord = currentLine.substring(currentWordStart, currentWordEnd).trim();
+      
+      // Only show autocomplete if we're on a word with at least 2 characters
+      if (currentWord.length >= 2) {
+        updateAutocomplete(currentWord);
       } else {
         autocompleteSuggestions.style.display = 'none';
       }
@@ -249,18 +308,49 @@
         const selectedAnime = currentSuggestions[index];
         // Extract the name properly whether it's an object or string
         const animeName = typeof selectedAnime === 'object' ? selectedAnime.name : selectedAnime;
-        const value = animeInput.value.trim();
-        const lines = value.split(/\n|,/).filter(line => line.trim() !== '');
-        const lastLine = lines.length > 0 ? lines[lines.length - 1] : '';
-        const words = lastLine.split(' ');
-        const lastWord = words.pop().trim();
         
-        // Replace the last word with selected anime name
-        const newLastLine = [...words, animeName].join(' ');
-        const newLines = [...lines.slice(0, -1), newLastLine];
-        const newValue = newLines.join('\n');
+        // Get current cursor position
+        const cursorPos = animeInput.selectionStart;
+        const value = animeInput.value;
+        
+        // Find the line where the cursor is currently located
+        const lines = value.split('\n');
+        let currentLineIndex = 0;
+        let charCount = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+          charCount += lines[i].length + 1; // +1 for the newline character
+          if (charCount > cursorPos) {
+            currentLineIndex = i;
+            break;
+          }
+        }
+        
+        // Get the current line content
+        const currentLine = lines[currentLineIndex];
+        
+        // Find the word at the cursor position in the current line
+        let currentWordStart = currentLine.lastIndexOf(' ', cursorPos - (charCount - lines[currentLineIndex].length - 1)) + 1;
+        let currentWordEnd = currentLine.indexOf(' ', cursorPos);
+        if (currentWordEnd === -1) currentWordEnd = currentLine.length;
+        
+        // Replace the word with selected anime name
+        const newCurrentLine = currentLine.substring(0, currentWordStart) + animeName + currentLine.substring(currentWordEnd);
+        
+        // Update all lines with the new current line
+        lines[currentLineIndex] = newCurrentLine;
+        
+        // Reconstruct the full text
+        const newValue = lines.join('\n');
         
         animeInput.value = newValue;
+        
+        // Set cursor position to after the inserted text
+        const newCursorPos = currentWordStart + animeName.length;
+        setTimeout(() => {
+          animeInput.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+        
         autocompleteSuggestions.style.display = 'none';
         selectedIndex = -1;
       }
@@ -285,7 +375,25 @@
       const raw = animeInput.value.trim();
       if (!raw) return showMessage('Please enter some anime', false);
 
-      const list = raw.split(/\n|,/).map(s => s.trim()).filter(Boolean);
+      // Split input by newlines or commas and clean up
+      let list = raw.split(/\n/).map(s => s.trim()).filter(Boolean);
+      
+      // Remove duplicates within the same submission (case insensitive)
+      const seen = new Set();
+      list = list.filter(anime => {
+        const lowerAnime = anime.toLowerCase();
+        if (seen.has(lowerAnime)) {
+          return false;
+        }
+        seen.add(lowerAnime);
+        return true;
+      });
+
+      // If no unique items remain after deduplication, show error
+      if (list.length === 0) {
+        showMessage('No unique anime entered - all were duplicates', false);
+        return;
+      }
 
       const res = await fetch('/anime/submit', {
         method: 'POST',
@@ -300,10 +408,22 @@
           showMessage('Anime list submitted!');
           window.location.href = '/profile.html'
         } else {
-          showMessage('No new anime added - all were duplicates', true);
+          showMessage('No new anime added - all were duplicates or already in your list', true);
         }
       }
-      else showMessage(data.error, false);
+      else {
+        if (data.error === 'duplicates found') {
+          if (data.duplicates) {
+            showMessage(`Anime list submitted! Duplicates removed: ${data.duplicates.join(', ')}`, true);
+            // Clear only the lines that contain duplicates from the input field
+            clearDuplicateLines(data.duplicates);
+          } else {
+            showMessage('No new anime added - duplicates found in submission', false);
+          }
+        } else {
+          showMessage(data.error, false);
+        }
+      }
     });
   </script>
 </body>

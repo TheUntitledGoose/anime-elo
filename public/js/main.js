@@ -73,7 +73,7 @@ async function checkAuthStatus() {
       logoutBtn?.classList.remove('hidden');
 
       if (profileBtn) profileBtn.onclick = () => {
-        window.location.href = `/profile.html?user=${encodeURIComponent(data.username)}`;
+        window.location.href = `/profile.html`;
       };
       if (logoutBtn) logoutBtn.onclick = () => logoutUser();
       if (homeBtn) homeBtn.onclick = () => window.location.href = '/';

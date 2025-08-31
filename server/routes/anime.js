@@ -3,6 +3,7 @@ import express from 'express';
 import crypto from 'crypto';
 import { Anime, UserList } from '../models/index.js';
 import { slugify, normalizeList } from '../utils.js';
+import { error } from 'console';
 
 const router = express.Router();
 
@@ -37,15 +38,44 @@ router.post('/submit', async (req, res) => {
         existingAnimeNames.add(anime.name.toLowerCase());
       });
     }
+    
+    // Also check against all anime in the global database for duplicates
+    const allAnimes = await Anime.find({});
+    allAnimes.forEach(anime => {
+      existingAnimeNames.add(anime.name.toLowerCase());
+    });
 
+    // Keep track of duplicates within the current submission
+    const seenInSubmission = new Set();
+    const uniqueAnimeList = [];
+    const duplicateNames = [];
+
+    // Filter out duplicates within the same submission (case insensitive)
     for (let name of animeListInput) {
       name = name.trim();
       if (!name) continue;
 
-      // Skip if already exists in user's list
       const lowerName = name.toLowerCase();
+      if (seenInSubmission.has(lowerName)) {
+        duplicateNames.push(name); // Keep track of duplicates for error message
+        continue; // Skip duplicates in this submission
+      }
+      seenInSubmission.add(lowerName);
+      uniqueAnimeList.push(name); // Keep track of unique names for processing
+    }
+
+    // Now check each unique anime against the existing database and user list
+    const duplicateNamesFromDatabase = [];
+    for (let name of uniqueAnimeList) {
+      name = name.trim();
+      if (!name) continue;
+
+      const lowerName = name.toLowerCase();
+      
+      // Check if this anime already exists in the global database or user's list
       if (existingAnimeNames.has(lowerName)) {
-        continue;
+        duplicateNamesFromDatabase.push(name);
+        continue; // Skip if it already exists anywhere
       }
 
       const slug = slugify(name);
@@ -60,8 +90,18 @@ router.post('/submit', async (req, res) => {
       existingAnimeNames.add(lowerName); // Add to set for subsequent checks in this request
     }
 
+    // If we have duplicates from the database or submission, return error with all duplicates
+    if (duplicateNames.length > 0 || duplicateNamesFromDatabase.length > 0) {
+      const allDuplicates = [...duplicateNames, ...duplicateNamesFromDatabase];
+      return res.status(400).json({ error: 'duplicates found', duplicates: allDuplicates });
+    }
+
     if (newAnimeEntries.length === 0) {
-      return res.json({ ok: true, added: 0, message: 'No new anime to add - all were duplicates' });
+      // Check if we have duplicates but no new entries
+      if (duplicateNames.length > 0 && uniqueAnimeList.length === 0) {
+        return res.status(400).json({ error: 'duplicates found', duplicates: duplicateNames });
+      }
+      return res.json({ error: 'No new anime to add - all were duplicates' });
     }
 
     // Use $addToSet with $each to append multiple entries, automatically avoiding duplicates
@@ -75,10 +115,15 @@ router.post('/submit', async (req, res) => {
     );
 
     res.json({ ok: true, added: newAnimeEntries.length });
-  } catch (err) {
-    console.error('anime submit err', err);
-    res.status(500).json({ error: 'internal' });
-  }
+    } catch (err) {
+      console.error('anime submit err', err);
+      // Check if this is specifically a duplicate error or other issue
+      if (err.message && err.message.includes('duplicate')) {
+        res.status(400).json({ error: 'duplicates found' });
+      } else {
+        res.status(500).json({ error: 'internal' });
+      }
+    }
 });
 
 // GET /anime/search?query=anime_name

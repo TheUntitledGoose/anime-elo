@@ -2,7 +2,7 @@ async function getAnimeImageUrl(animeName) {
   try {
     const response = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(animeName)}&limit=1`);
     const data = await response.json();
-    return data.data[0]?.images?.jpg?.large_image_url || null;
+    return data.data[0]?.images?.jpg?.image_url || null;
   } catch (error) {
     console.error('Error fetching image for', animeName, error);
     return null;
@@ -38,12 +38,41 @@ async function loadPair() {
     animeAEl.style.backgroundPosition = animeBEl.style.backgroundPosition = 'center';
 
     // Optional: set a min height for visuals
-    animeAEl.style.minHeight = animeBEl.style.minHeight = '444px';
+    // Make the buttons responsive by adjusting heights based on screen size
+    if (window.innerWidth <= 480) {
+      animeAEl.style.minHeight = animeBEl.style.minHeight = '100px';
+      animeAEl.style.fontSize = animeBEl.style.fontSize = '1.2rem';
+    } else {
+      animeAEl.style.minHeight = animeBEl.style.minHeight = '444px';
+      animeAEl.style.fontSize = animeBEl.style.fontSize = '1.5rem';
+    }
     animeAEl.style.border = animeBEl.style.border = 'none';
-    animeAEl.style.minWidth = animeBEl.style.minWidth = '250px';
+    // For mobile, adjust min width to be more responsive
+    if (window.innerWidth <= 480) {
+      animeAEl.style.minWidth = animeBEl.style.minWidth = '90%';
+    } else {
+      animeAEl.style.minWidth = animeBEl.style.minWidth = '250px';
+    }
     // animeAEl.style.display = animeBEl.style.display = 'flex';
     animeAEl.style.alignItems = animeBEl.style.alignItems = 'center';
     animeAEl.style.justifyContent = animeBEl.style.justifyContent = 'center';
+
+    // Remove any existing skip button to avoid duplicates
+    const existingSkipButton = document.getElementById('skipButton');
+    if (existingSkipButton) {
+      existingSkipButton.remove();
+    }
+
+    // Add skip button functionality
+    const skipButton = document.createElement('button');
+    skipButton.id = 'skipButton';
+    skipButton.textContent = 'Skip (Haven\'t Seen)';
+    skipButton.onclick = () => submitSkip();
+    skipButton.style.padding = '10px 20px';
+
+    // Add the skip button after the vote buttons
+    const container = document.getElementById('voteContainer');
+    container.parentNode.insertBefore(skipButton, container.nextSibling)
 
     // Load images
     const [imageA, imageB] = await Promise.all([
@@ -95,6 +124,34 @@ async function submitVote(winner, loser) {
   } catch (err) {
     console.error(err);
     status.textContent = 'Failed to submit vote.';
+  }
+}
+
+async function submitSkip() {
+  const status = document.getElementById('status');
+  status.textContent = 'Skipping vote...';
+
+  try {
+    const res = await fetch('/vote/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ skip: true })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      status.textContent = data.error;
+      return;
+    }
+
+    status.textContent = 'Vote skipped!';
+
+    // Load next pair automatically
+    setTimeout(loadPair, 800);
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Failed to skip vote.';
   }
 }
 

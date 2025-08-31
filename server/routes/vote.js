@@ -58,21 +58,24 @@ router.get('/bootstrap', async (req, res) => {
 
 /**
  * GET /vote/get-pair
- * Returns two random anime from the logged-in user's list for voting
+ * Returns two random anime from the global database for voting
  */
 router.get('/get-pair', async (req, res) => {
   try {
-    if (!req.session.user.userId) return res.status(401).json({ error: 'Login required' });
+    const userUuid = getRequesterUuid(req);
+    if (!userUuid) return res.status(401).json({ error: 'Login required' });
 
     const db = getDb();
-    // Fixed: Use userUuid instead of userId to match the UserList model
-    const userList = await db.collection('userlists').findOne({ userUuid: req.session.user.userId });
-
-    if (!userList || userList.animeList.length < 2) {
-      return res.json({ error: 'Not enough anime to vote', animeList: [] });
+    
+    // Get all anime from the global database
+    const animes = await db.collection('animes').find({}).toArray();
+    
+    if (animes.length < 2) {
+      return res.json({ error: 'Not enough anime in database to vote' });
     }
 
-    const shuffled = userList.animeList.sort(() => 0.5 - Math.random());
+    // Shuffle and pick two random animes
+    const shuffled = animes.sort(() => 0.5 - Math.random());
     const [animeA, animeB] = shuffled.slice(0, 2);
 
     res.json({ animeA, animeB });
@@ -232,24 +235,62 @@ router.post('/submit-old', async (req, res) => {
 
 /**
  * POST /vote/submit
- * body: { winner: "animeName", loser: "animeName" }
- * Updates Elo values for the winner and loser anime in the user's list
+ * body: { winner: "animeName", loser: "animeName" } or { skip: true }
+ * Updates Elo values for the winner and loser anime in the user's list, or handles skip
  */
 router.post('/submit', async (req, res) => {
   try {
-    if (!req.session.user.userId) return res.status(401).json({ error: 'Login required' });
+    const userUuid = getRequesterUuid(req);
+    if (!userUuid) return res.status(401).json({ error: 'Login required' });
 
-    const { winner, loser } = req.body;
+    const { winner, loser, skip } = req.body;
+    
+    // Handle skip case
+    if (skip) {
+      // When skipping, just log the action and return success
+      const db = getDb();
+      await db.collection('voteLogs').insertOne({
+        userId: userUuid,
+        skip: true,
+        createdAt: new Date()
+      });
+      
+      return res.json({ ok: true, message: 'Vote skipped' });
+    }
+
+    // Handle normal voting case
     if (!winner || !loser) return res.status(400).json({ error: 'Winner and loser required' });
 
     const db = getDb();
-    // Fixed: Use userUuid instead of userId to match the UserList model
-    const userList = await db.collection('userlists').findOne({ userUuid: req.session.user.userId });
-    if (!userList) return res.status(400).json({ error: 'User anime list not found' });
+    
+    // Get or create user list
+    let userList = await db.collection('userlists').findOne({ userUuid: userUuid });
+    if (!userList) {
+      userList = { userUuid: userUuid, animeList: [], updatedAt: new Date() };
+    }
 
-    const animeA = userList.animeList.find(a => a.name === winner);
-    const animeB = userList.animeList.find(a => a.name === loser);
-    if (!animeA || !animeB) return res.status(400).json({ error: 'Anime not in your list' });
+    // Create a clean anime list with unique entries to prevent duplicates
+    const animeMap = new Map();
+    
+    // Process existing anime in the user list to build unique map
+    for (const anime of userList.animeList) {
+      if (!animeMap.has(anime.name)) {
+        animeMap.set(anime.name, { name: anime.name, elo: anime.elo });
+      }
+    }
+
+    // Ensure winner and loser exist in the map (create with default ELO if missing)
+    if (!animeMap.has(winner)) {
+      animeMap.set(winner, { name: winner, elo: 1500 });
+    }
+    
+    if (!animeMap.has(loser)) {
+      animeMap.set(loser, { name: loser, elo: 1500 });
+    }
+
+    // Get the actual anime objects from map
+    const animeA = animeMap.get(winner);
+    const animeB = animeMap.get(loser);
 
     // Elo calculation
     const K = 32;
@@ -258,17 +299,23 @@ router.post('/submit', async (req, res) => {
     const expectedA = 1 / (1 + 10 ** ((Rb - Ra) / 400));
     const expectedB = 1 - expectedA;
 
+    // Update ELO values
     animeA.elo = Math.round(Ra + K * (1 - expectedA));
     animeB.elo = Math.round(Rb + K * (0 - expectedB));
 
-// Fixed: Use userUuid instead of userId to match the UserList model
+    // Convert map back to array for saving
+    const cleanAnimeList = Array.from(animeMap.values());
+
+    // Save updated user list
     await db.collection('userlists').updateOne(
-      { userUuid: req.session.user.userId },
-      { $set: { animeList: userList.animeList, updatedAt: new Date() } }
+      { userUuid: userUuid },
+      { $set: { animeList: cleanAnimeList, updatedAt: new Date() } },
+      { upsert: true }
     );
 
+    // Log the vote
     await db.collection('voteLogs').insertOne({
-      userId: req.session.userId,
+      userId: userUuid,
       winner,
       loser,
       createdAt: new Date()
