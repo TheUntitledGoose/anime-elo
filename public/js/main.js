@@ -123,6 +123,7 @@ function createUserAnimeList(userData) {
   animeListContainer.style.marginTop = '1rem';
 
   // Handle case where animeList might be undefined or not an array
+  
   if (userData.animeList && Array.isArray(userData.animeList) && userData.animeList.length > 0) {
     // Only display top 5 animes
     const top5Animes = userData.animeList.slice(0, 5);
