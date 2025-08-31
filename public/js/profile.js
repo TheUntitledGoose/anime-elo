@@ -1,16 +1,29 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    // Fetch the currently logged-in user
-    const authRes = await fetch('/auth/me', { credentials: 'include' });
-    const authData = await authRes.json();
+    // Check if a user query parameter is provided (for viewing other users' profiles)
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetUsername = urlParams.get('user');
 
-    if (!authData.loggedIn) {
-      alert('You must be logged in to view your profile.');
-      window.location.href = '/';
-      return;
+    let userName;
+    let authData;
+
+    if (targetUsername) {
+      // Viewing another user's profile - no authentication required for this view
+      userName = targetUsername;
+      // We don't need to fetch auth info when viewing another user's profile
+    } else {
+      // Fetch the currently logged-in user
+      const authRes = await fetch('/auth/me', { credentials: 'include' });
+      authData = await authRes.json();
+
+      if (!authData.loggedIn) {
+        alert('You must be logged in to view your profile.');
+        window.location.href = '/';
+        return;
+      }
+
+      userName = authData.username;
     }
-
-    const userName = authData.username;
 
     // Fetch the user's anime list
     const res = await fetch(`/leaderboard/user/${encodeURIComponent(userName)}`, { credentials: 'include' });
@@ -51,30 +64,66 @@ document.addEventListener('DOMContentLoaded', async () => {
       tableBody.appendChild(row);
     }
 
-    // Add event listeners for delete buttons
-    document.querySelectorAll('.deleteBtn').forEach(btn => {
-      btn.onclick = async () => {
-        const animeName = btn.dataset.name;
-        if (!confirm(`Delete "${animeName}" from your list?`)) return;
+    // Add event listeners for delete buttons (only if viewing own profile)
+    if (!targetUsername) {
+      document.querySelectorAll('.deleteBtn').forEach(btn => {
+        btn.onclick = async () => {
+          const animeName = btn.dataset.name;
+          if (!confirm(`Delete "${animeName}" from your list?`)) return;
 
-        try {
-          const res = await fetch('/profile/anime', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ name: animeName })
-          });
-          const result = await res.json();
-          if (result.ok) {
-            // Reload profile after deletion
-            btn.closest('tr').remove(); // remove row from table immediately
+          try {
+            const res = await fetch('/profile/anime', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ name: animeName })
+            });
+            const result = await res.json();
+            if (result.ok) {
+              // Reload profile after deletion
+              btn.closest('tr').remove(); // remove row from table immediately
+            }
+          } catch (err) {
+            console.error('Failed to delete anime:', err);
+            alert('Failed to delete anime');
           }
-        } catch (err) {
-          console.error('Failed to delete anime:', err);
-          alert('Failed to delete anime');
-        }
-      };
-    });
+        };
+      });
+    } else {
+      // Hide delete buttons when viewing another user's profile
+      document.querySelectorAll('.deleteBtn').forEach(btn => {
+        btn.style.display = 'none';
+      });
+      // Hide the add list button as well for other users
+      document.getElementById('addListBtn')?.style.setProperty('display', 'none');
+      // Hide battle arena button for other users
+      document.getElementById('voteBtn')?.style.setProperty('display', 'none');
+    }
+
+    // Setup navigation buttons based on context (own profile vs other user's profile)
+    const homeBtn = document.getElementById('homeBtn');
+    const voteBtn = document.getElementById('voteBtn');
+    const addListBtn = document.getElementById('addListBtn');
+    
+    if (targetUsername) {
+      // When viewing another user's profile, hide the battle arena button and make home button work properly
+      if (voteBtn) voteBtn.style.display = 'none';
+      // Home button should still work to go back to index page
+      if (homeBtn) {
+        homeBtn.onclick = () => window.location.href = '/';
+      }
+    } else {
+      // When viewing own profile, set up proper event handlers for buttons
+      if (homeBtn) {
+        homeBtn.onclick = () => window.location.href = '/';
+      }
+      if (voteBtn) {
+        voteBtn.onclick = () => window.location.href = '/vote.html';
+      }
+      if (addListBtn) {
+        addListBtn.onclick = () => window.location.href = '/add-list.html';
+      }
+    }
 
   } catch (err) {
     console.error('Error loading profile:', err);

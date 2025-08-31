@@ -101,9 +101,13 @@ function createUserAnimeList(userData) {
   const container = document.createElement('div');
   container.classList.add('user-anime-list');
 
-  // User header info with better styling
+  // User header info with better styling - make it clickable
   const header = document.createElement('h3');
   header.textContent = `${userData.user}`;
+  header.style.cursor = 'pointer';
+  header.addEventListener('click', () => {
+    window.location.href = `/profile.html?user=${encodeURIComponent(userData.user)}`;
+  });
   container.appendChild(header);
 
   const updatedAtSpan = document.createElement('span');
