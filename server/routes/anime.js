@@ -59,7 +59,7 @@ router.post('/submit', async (req, res) => {
       uniqueAnimeList.push(name); // Keep track of unique names for processing
     }
 
-    // Now check each unique anime against the existing database and user list
+// Now check each unique anime against the existing database and user list
     const duplicateNamesFromDatabase = [];
     for (let name of uniqueAnimeList) {
       name = name.trim();
@@ -67,10 +67,10 @@ router.post('/submit', async (req, res) => {
 
       const lowerName = name.toLowerCase();
       
-      // Check if this anime already exists in the global database or user's list
+      // Check if this anime already exists in the user's list
       if (existingAnimeNames.has(lowerName)) {
         duplicateNamesFromDatabase.push(name);
-        continue; // Skip if it already exists anywhere
+        continue; // Skip if it already exists in user's list
       }
 
       const slug = slugify(name);
