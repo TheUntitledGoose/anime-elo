@@ -29,7 +29,7 @@ router.post('/submit', async (req, res) => {
     const now = new Date();
     const newAnimeEntries = [];
 
-    // First, get the user's current anime list to check for duplicates
+// First, get the user's current anime list to check for duplicates
     const currentUserList = await UserList.findOne({ userUuid });
     const existingAnimeNames = new Set();
     
@@ -39,11 +39,6 @@ router.post('/submit', async (req, res) => {
       });
     }
     
-    // Also check against all anime in the global database for duplicates
-    const allAnimes = await Anime.find({});
-    allAnimes.forEach(anime => {
-      existingAnimeNames.add(anime.name.toLowerCase());
-    });
 
     // Keep track of duplicates within the current submission
     const seenInSubmission = new Set();

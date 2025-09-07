@@ -58,7 +58,7 @@ router.get('/bootstrap', async (req, res) => {
 
 /**
  * GET /vote/get-pair
- * Returns two random anime from the global database for voting
+ * Returns two random anime from the user's list for voting
  */
 router.get('/get-pair', async (req, res) => {
   try {
@@ -67,15 +67,15 @@ router.get('/get-pair', async (req, res) => {
 
     const db = getDb();
     
-    // Get all anime from the global database
-    const animes = await db.collection('animes').find({}).toArray();
+    // Get the user's anime list
+    const userList = await db.collection('userlists').findOne({ userUuid: userUuid });
     
-    if (animes.length < 2) {
-      return res.json({ error: 'Not enough anime in database to vote' });
+    if (!userList || !userList.animeList || userList.animeList.length < 2) {
+      return res.json({ error: 'Not enough anime in your list to vote. Add more anime to your list first.' });
     }
 
-    // Shuffle and pick two random animes
-    const shuffled = animes.sort(() => 0.5 - Math.random());
+    // Shuffle and pick two random animes from user's list
+    const shuffled = userList.animeList.sort(() => 0.5 - Math.random());
     const [animeA, animeB] = shuffled.slice(0, 2);
 
     res.json({ animeA, animeB });
@@ -269,28 +269,20 @@ router.post('/submit', async (req, res) => {
       userList = { userUuid: userUuid, animeList: [], updatedAt: new Date() };
     }
 
-    // Create a clean anime list with unique entries to prevent duplicates
-    const animeMap = new Map();
+    // Check if both animes exist in user's list
+    let animeA = userList.animeList.find(a => a.name === winner);
+    let animeB = userList.animeList.find(a => a.name === loser);
     
-    // Process existing anime in the user list to build unique map
-    for (const anime of userList.animeList) {
-      if (!animeMap.has(anime.name)) {
-        animeMap.set(anime.name, { name: anime.name, elo: anime.elo });
-      }
-    }
-
-    // Ensure winner and loser exist in the map (create with default ELO if missing)
-    if (!animeMap.has(winner)) {
-      animeMap.set(winner, { name: winner, elo: 1500 });
+    // If either doesn't exist, create them with default ELO of 1500
+    if (!animeA) {
+      animeA = { name: winner, elo: 1500 };
+      userList.animeList.push(animeA);
     }
     
-    if (!animeMap.has(loser)) {
-      animeMap.set(loser, { name: loser, elo: 1500 });
+    if (!animeB) {
+      animeB = { name: loser, elo: 1500 };
+      userList.animeList.push(animeB);
     }
-
-    // Get the actual anime objects from map
-    const animeA = animeMap.get(winner);
-    const animeB = animeMap.get(loser);
 
     // Elo calculation
     const K = 32;
@@ -303,13 +295,10 @@ router.post('/submit', async (req, res) => {
     animeA.elo = Math.round(Ra + K * (1 - expectedA));
     animeB.elo = Math.round(Rb + K * (0 - expectedB));
 
-    // Convert map back to array for saving
-    const cleanAnimeList = Array.from(animeMap.values());
-
     // Save updated user list
     await db.collection('userlists').updateOne(
       { userUuid: userUuid },
-      { $set: { animeList: cleanAnimeList, updatedAt: new Date() } },
+      { $set: { animeList: userList.animeList, updatedAt: new Date() } },
       { upsert: true }
     );
 
