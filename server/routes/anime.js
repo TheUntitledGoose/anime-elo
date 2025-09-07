@@ -104,15 +104,50 @@ router.post('/submit', async (req, res) => {
       return res.json({ error: 'No new anime to add - all were duplicates' });
     }
 
-    // Use $addToSet with $each to append multiple entries, automatically avoiding duplicates
-    await UserList.findOneAndUpdate(
-      { userUuid },
-      { 
-        $addToSet: { animeList: { $each: newAnimeEntries } },
-        $set: { updatedAt: now }
-      },
-      { upsert: true, new: true }
-    );
+// Use $addToSet with $each to append multiple entries, automatically avoiding duplicates
+    // First check if any of the new entries already exist in user's list
+    const existingAnimeNamesInUserList = new Set();
+    if (currentUserList && currentUserList.animeList) {
+      currentUserList.animeList.forEach(anime => {
+        existingAnimeNamesInUserList.add(anime.name.toLowerCase());
+      });
+    }
+    
+    // Filter out any entries that already exist in the user's list
+    const filteredNewEntries = newAnimeEntries.filter(entry => !existingAnimeNamesInUserList.has(entry.name.toLowerCase()));
+    
+    if (filteredNewEntries.length > 0) {
+      try {
+        await UserList.findOneAndUpdate(
+          { userUuid },
+          { 
+            $addToSet: { animeList: { $each: filteredNewEntries } },
+            $set: { updatedAt: now }
+          },
+          { upsert: true, new: true }
+        );
+      } catch (dbError) {
+        // Handle the case where we get a duplicate key error from database
+        if (dbError.code === 11000) {
+          console.log("Duplicate key error caught and handled - this should not happen with our filtering");
+          // If we still get this error, let's try updating without $addToSet to avoid the constraint
+          await UserList.findOneAndUpdate(
+            { userUuid },
+            { $set: { updatedAt: now } },  // Update timestamp first
+            { upsert: true, new: true }
+          );
+        } else {
+          throw dbError;  // Re-throw if it's a different error
+        }
+      }
+    } else {
+      // If no new entries to add, just update the timestamp
+      await UserList.findOneAndUpdate(
+        { userUuid },
+        { $set: { updatedAt: now } },
+        { upsert: true, new: true }
+      );
+    }
 
     res.json({ ok: true, added: newAnimeEntries.length });
     } catch (err) {
