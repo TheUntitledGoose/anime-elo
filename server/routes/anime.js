@@ -85,10 +85,15 @@ router.post('/submit', async (req, res) => {
       existingAnimeNames.add(lowerName); // Add to set for subsequent checks in this request
     }
 
-    // If we have duplicates from the database or submission, return error with all duplicates
+// If we have duplicates from the database or submission, return error with all duplicates
     if (duplicateNames.length > 0 || duplicateNamesFromDatabase.length > 0) {
       const allDuplicates = [...duplicateNames, ...duplicateNamesFromDatabase];
-      return res.status(400).json({ error: 'duplicates found', duplicates: allDuplicates });
+      // Provide clearer information about which specific items are duplicates
+      return res.status(400).json({ 
+        error: 'duplicates found', 
+        duplicates: allDuplicates,
+        message: `Duplicate anime found in your list: ${allDuplicates.join(', ')}\nThese anime already exist in your personal list.`
+      });
     }
 
     if (newAnimeEntries.length === 0) {

@@ -411,10 +411,15 @@
           showMessage('No new anime added - all were duplicates or already in your list', true);
         }
       }
-      else {
+else {
         if (data.error === 'duplicates found') {
           if (data.duplicates) {
-            showMessage(`Anime list submitted! Duplicates removed: ${data.duplicates.join(', ')}`, true);
+            // Show detailed message including which specific items are duplicates
+            if (data.message) {
+              showMessage(data.message, false);  // Show error in red for better visibility
+            } else {
+              showMessage(`Anime list submitted! Duplicates removed: ${data.duplicates.join(', ')}`, true);
+            }
             // Clear only the lines that contain duplicates from the input field
             clearDuplicateLines(data.duplicates);
           } else {
